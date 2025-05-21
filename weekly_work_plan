@@ -1,0 +1,15 @@
+the weekly plan :
+| Week | Timeframe  | Tasks                                                                                                |
+| ---- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| 1    | Days 1–5   | – Project kickoff: finalize requirements & interface specs<br>– Outline 3-stage pipeline functions   |
+| 2    | Days 6–10  | – Define ISA extensions & privilege levels<br>– Specify pipeline registers & control signals         |
+| 3    | Days 11–15 | – Set up verification framework skeleton (UVM/SystemVerilog)<br>– Draft initial test plan            |
+| 4    | Days 16–20 | – RTL for Stage 1 (Fetch + PC logic)<br>– Stage 1 functional simulation                              |
+| 5    | Days 21–25 | – RTL for Stage 2 (Decode + RegFile read/write)<br>– Preliminary timing & latency review             |
+| 6    | Days 26–30 | – Stage 2 verification & regression tests<br>– Begin hazards handling between Stages 1/2             |
+| 7    | Days 31–35 | – RTL for Stage 3 (Execute + Write-back)<br>– Integrate full pipeline skeleton                       |
+| 8    | Days 36–40 | – Stage 3 verification & full-pipeline regression<br>– Performance modeling (throughput, latency)    |
+| 9    | Days 41–45 | – Timing-closure optimizations (update synthesis constraints)<br>– Generate synth report             |
+| 10   | Days 46–50 | – Full functional coverage: corner cases, exceptions & interrupts<br>– Coverage analysis & bug fixes |
+| 11   | Days 51–55 | – Stress tests (full-throughput pipeline)<br>– Resource utilization & power estimation               |
+| 12   | Days 56–60 | – Final system integration & verification<br>– Finalize docs & summary report<br>– Prepare demo      |
