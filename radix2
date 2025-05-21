@@ -1,0 +1,127 @@
+//------------------------------------------------------------------------------
+// FFT Core for RISC-V Integration
+//------------------------------------------------------------------------------
+// Parameterizable Radix-2 Decimation-in-Time FFT
+// - DATA_WIDTH: bit-width of real/imag inputs
+// - POINTS: number of FFT points (power of two)
+//------------------------------------------------------------------------------
+
+module fft_core #(
+    parameter DATA_WIDTH = 16,
+    parameter POINTS     = 64,
+    parameter ADDR_WIDTH = $clog2(POINTS)
+)(
+    input  wire                    clk,
+    input  wire                    rst,        // synchronous reset
+
+    // Input handshake (AXI-Stream style)
+    input  wire                    valid_in,
+    output wire                    ready_in,
+    input  wire signed [DATA_WIDTH-1:0] data_real_in,
+    input  wire signed [DATA_WIDTH-1:0] data_imag_in,
+
+    // Output handshake
+    output wire                    valid_out,
+    input  wire                    ready_out,
+    output wire signed [DATA_WIDTH-1:0] data_real_out,
+    output wire signed [DATA_WIDTH-1:0] data_imag_out
+);
+
+    // Internal memory for input samples
+    reg signed [DATA_WIDTH-1:0] ram_real [0:POINTS-1];
+    reg signed [DATA_WIDTH-1:0] ram_imag [0:POINTS-1];
+
+    // Twiddle factor ROM
+    localparam TW_ADDR_WIDTH = ADDR_WIDTH - 1;
+    reg signed [DATA_WIDTH-1:0] tw_real [0:(POINTS/2)-1];
+    reg signed [DATA_WIDTH-1:0] tw_imag [0:(POINTS/2)-1];
+    initial $readmemh("twiddle_real.hex", tw_real);
+    initial $readmemh("twiddle_imag.hex", tw_imag);
+
+    // FSM States
+    typedef enum logic [1:0] {IDLE, LOAD, COMPUTE, OUTPUT} state_t;
+    state_t state, next_state;
+
+    // Indices & counters
+    reg [ADDR_WIDTH-1:0] idx;
+    reg [TW_ADDR_WIDTH-1:0] tw_idx;
+    reg [ADDR_WIDTH-1:0] stage;
+
+    // Butterfly datapath regs
+    reg signed [DATA_WIDTH-1:0] a_real, a_imag, b_real, b_imag;
+    wire signed [DATA_WIDTH-1:0] m_real, m_imag;
+    wire signed [DATA_WIDTH-1:0] out0_real, out0_imag;
+    wire signed [DATA_WIDTH-1:0] out1_real, out1_imag;
+
+    // Multiply twiddle: m = B * W
+    assign m_real = (b_real * tw_real[tw_idx] - b_imag * tw_imag[tw_idx]) >>> (DATA_WIDTH/2);
+    assign m_imag = (b_real * tw_imag[tw_idx] + b_imag * tw_real[tw_idx]) >>> (DATA_WIDTH/2);
+
+    // Butterfly outputs
+    assign out0_real = a_real + m_real;
+    assign out0_imag = a_imag + m_imag;
+    assign out1_real = a_real - m_real;
+    assign out1_imag = a_imag - m_imag;
+
+    // Handshake
+    assign ready_in  = (state == LOAD);
+    assign valid_out = (state == OUTPUT);
+
+    // FSM sequential
+    always @(posedge clk) begin
+        if (rst) state <= IDLE;
+        else     state <= next_state;
+    end
+
+    // FSM combinational
+    always @(*) begin
+        next_state = state;
+        case (state)
+            IDLE:    if (valid_in) next_state = LOAD;
+            LOAD:    if (idx == POINTS-1) next_state = COMPUTE;
+            COMPUTE: if (stage == 0)     next_state = OUTPUT;
+            OUTPUT:  if (idx == POINTS-1) next_state = IDLE;
+        endcase
+    end
+
+    // Main operations
+    always @(posedge clk) begin
+        if (rst) begin
+            idx   <= 0;
+            stage <= POINTS/2;
+        end else begin
+            case (state)
+                LOAD: begin
+                    // write incoming samples
+                    if (valid_in) begin
+                        ram_real[idx] <= data_real_in;
+                        ram_imag[idx] <= data_imag_in;
+                        idx <= idx + 1;
+                    end
+                end
+                COMPUTE: begin
+                    // iterate through stages and butterflies
+                    // (omitting detailed looping control for brevity)
+                    // update idx, tw_idx, stage accordingly
+                end
+                OUTPUT: begin
+                    // output transformed samples
+                    if (valid_out && ready_out) begin
+                        data_real_out <= ram_real[idx];
+                        data_imag_out <= ram_imag[idx];
+                        idx <= idx + 1;
+                    end
+                end
+            endcase
+        end
+    end
+
+endmodule
+
+//------------------------------------------------------------------------------
+// Additional Modules:
+// 1. fft_control.v      : Control registers (start, done, status)
+// 2. axi_stream_if.v    : AXI4-Stream wrapper for RISC-V DMA interface
+// 3. dma_controller.v   : DMA engine to move data between RAM and FFT core
+// 4. software_driver.C  : C driver for RISC-V to configure and start FFT
+//------------------------------------------------------------------------------
