@@ -1,0 +1,9 @@
+make test-rv32ui-p-add     cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_add.vcd
+make test-rv32ui-p-addi    cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_addi.vcd
+make test-rv32ui-p-and     cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_and.vcd
+make test-rv32ui-p-lw      cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_lw.vcd
+make test-rv32ui-p-sw      cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_sw.vcd
+make test-rv32mi-p-csr     cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_csr.vcd
+make test-rv32mi-p-illegal cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_illegal.vcd
+make test-rv32mi-p-scall   cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_scall.vcd
+make test-rv32mi-p-ma_addr cflags='-DVCDTRACE=1' && mv -f dump.vcd dump_ma_addr.vcd
